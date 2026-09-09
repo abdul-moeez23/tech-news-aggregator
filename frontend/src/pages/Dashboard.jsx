@@ -23,12 +23,35 @@ function timeAgo(dateString) {
   return Math.floor(seconds) + " seconds ago";
 }
 
+const htmlParser = new DOMParser();
+const stripHtml = (html) => {
+  if (!html) return "";
+  let text = html;
+  let previous = "";
+  
+  // Handle double or triple escaped HTML (common in some RSS feeds)
+  for (let i = 0; i < 3; i++) {
+    // Unescape HTML entities
+    text = htmlParser.parseFromString(text, 'text/html').body.textContent || "";
+    // Remove any newly unescaped tags
+    text = text.replace(/<[^>]+>/g, '');
+    if (text === previous) break;
+    previous = text;
+  }
+  
+  return text;
+};
+
 function Dashboard() {
   const [activeFilter, setActiveFilter] = useState('All');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncMessage, setSyncMessage] = useState('');
+  
+  const [categories, setCategories] = useState(['All']);
+  
+  const [searchQuery, setSearchQuery] = useState('');
   
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -57,6 +80,11 @@ function Dashboard() {
 
   useEffect(() => {
     dispatch(fetchFeed());
+    api.get('/preferences/').then(res => {
+      if (res.data && res.data.categories) {
+        setCategories(['All', ...res.data.categories]);
+      }
+    }).catch(err => console.error("Error fetching preferences", err));
   }, [dispatch]);
 
   const handleLogout = () => {
@@ -68,9 +96,13 @@ function Dashboard() {
     navigate('/');
   };
 
-  const filteredArticles = activeFilter === 'All' 
-    ? articles 
-    : articles.filter(article => article.category_name === activeFilter);
+  const filteredArticles = articles.filter(article => {
+    const matchesFilter = activeFilter === 'All' || article.category_name === activeFilter;
+    const matchesSearch = !searchQuery || 
+      article.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      (article.summary && stripHtml(article.summary).toLowerCase().includes(searchQuery.toLowerCase()));
+    return matchesFilter && matchesSearch;
+  });
 
   return (
     <div className="min-h-screen bg-bg-primary text-text-primary flex font-sans">
@@ -130,6 +162,8 @@ function Dashboard() {
             <svg className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
             <input 
               type="text" 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search technology news..." 
               className="w-full bg-bg-card border border-border-subtle rounded-full py-2 pl-10 pr-4 text-sm text-text-primary focus:outline-none focus:border-accent-blue transition-colors"
             />
@@ -143,7 +177,7 @@ function Dashboard() {
         </header>
 
         <div className="flex-1 overflow-auto">
-          <div className="max-w-6xl mx-auto p-6 md:p-8">
+          <div className="max-w-4xl mx-auto p-6 md:p-8">
             <div className="mb-8 flex justify-between items-end">
               <div>
                 <h1 className="text-3xl font-bold text-text-primary mb-2">Good evening.</h1>
@@ -165,7 +199,7 @@ function Dashboard() {
             {/* Filter Controls */}
             <div className="flex items-center gap-3 overflow-x-auto pb-4 mb-6 scrollbar-hide">
               <span className="text-sm font-bold text-text-primary mr-2">Your Feed</span>
-              {['All', 'AI', 'Startups', 'Cybersecurity', 'Gadgets', 'Cloud'].map(filter => (
+              {categories.map(filter => (
                 <button 
                   key={filter}
                   onClick={() => setActiveFilter(filter)}
@@ -180,89 +214,62 @@ function Dashboard() {
               ))}
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="flex flex-col gap-6">
               {/* News Feed */}
-              <div className="lg:col-span-2 flex flex-col gap-6">
-                {status === 'loading' && <p className="text-text-secondary">Loading your feed...</p>}
-                {status === 'failed' && <p className="text-accent-purple">Failed to load feed.</p>}
-                
-                {status === 'succeeded' && filteredArticles.length === 0 && (
-                  <p className="text-text-secondary">No articles found for this category.</p>
-                )}
+              {status === 'loading' && <p className="text-text-secondary">Loading your feed...</p>}
+              {status === 'failed' && <p className="text-accent-purple">Failed to load feed.</p>}
+              
+              {status === 'succeeded' && filteredArticles.length === 0 && (
+                <p className="text-text-secondary">No articles found for this category.</p>
+              )}
 
-                {status === 'succeeded' && filteredArticles.map(article => (
-                  <div key={article.id} className="bg-bg-card border border-border-subtle rounded-2xl overflow-hidden hover:border-border-subtle/80 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/50 transition-all duration-300 group">
-                    <div className="p-6">
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 rounded bg-bg-card-elevated flex items-center justify-center text-xs font-bold text-text-primary border border-border-subtle">
-                            {article.source_names[0]?.charAt(0) || '?'}
-                          </div>
-                          <span className="text-sm font-medium text-text-secondary">
-                            {article.source_names[0]} • {timeAgo(article.publication_date)}
-                          </span>
+              {status === 'succeeded' && filteredArticles.map(article => {
+                const summaryText = stripHtml(article.summary).trim();
+                // Hide summary if it's empty or just says 'Comments', 'Read More', etc.
+                const showSummary = summaryText && !/^(comments?|read more|article)$/i.test(summaryText);
+                
+                return (
+                <div key={article.id} className="bg-bg-card border border-border-subtle rounded-2xl overflow-hidden flex flex-col hover:border-border-subtle/80 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/50 transition-all duration-300 group">
+                  <div className="p-6 flex flex-col h-full">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded bg-bg-card-elevated flex items-center justify-center text-xs font-bold text-text-primary border border-border-subtle">
+                          {article.source_names[0]?.charAt(0) || '?'}
                         </div>
-                        <a href={article.url} target="_blank" rel="noopener noreferrer" className="text-text-muted hover:text-text-primary transition-colors">
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
-                        </a>
-                      </div>
-                      
-                      <a href={article.url} target="_blank" rel="noopener noreferrer" className="block group-hover:text-accent-blue transition-colors">
-                        <h2 className="text-xl md:text-2xl font-bold text-text-primary mb-3 leading-snug">{article.title}</h2>
-                      </a>
-                      
-                      <p className="text-text-secondary mb-4 leading-relaxed">{article.summary}</p>
-                      
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="px-2.5 py-1 rounded bg-bg-card-elevated border border-border-subtle text-xs font-medium text-text-secondary">
-                          {article.category_name}
+                        <span className="text-sm font-medium text-text-secondary">
+                          {article.source_names[0]} • {timeAgo(article.publication_date)}
                         </span>
-                        
-                        {/* Display multiple sources if consolidated */}
-                        {article.source_names.length > 1 && (
-                          <span className="ml-auto text-xs font-medium text-accent-blue">
-                            Also reported by: {article.source_names.slice(1).join(', ')}
-                          </span>
-                        )}
                       </div>
+                      <a href={article.url} target="_blank" rel="noopener noreferrer" className="text-text-muted hover:text-text-primary transition-colors">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                      </a>
+                    </div>
+                    
+                    <a href={article.url} target="_blank" rel="noopener noreferrer" className="block group-hover:text-accent-blue transition-colors">
+                      <h2 className="text-xl md:text-2xl font-bold text-text-primary mb-3 leading-snug">{article.title}</h2>
+                    </a>
+                    
+                    {showSummary && (
+                      <p className="text-text-secondary mb-4 leading-relaxed line-clamp-3">
+                        {summaryText}
+                      </p>
+                    )}
+                    
+                    <div className="flex items-center gap-2 flex-wrap mt-auto">
+                      <span className="px-2.5 py-1 rounded bg-bg-card-elevated border border-border-subtle text-xs font-medium text-text-secondary">
+                        {article.category_name}
+                      </span>
+                      
+                      {/* Display multiple sources if consolidated */}
+                      {article.source_names.length > 1 && (
+                        <span className="ml-auto text-xs font-medium text-accent-blue">
+                          Also reported by: {article.source_names.slice(1).join(', ')}
+                        </span>
+                      )}
                     </div>
                   </div>
-                ))}
-              </div>
-
-              {/* Right Sidebar - Trending */}
-              <div className="hidden lg:flex flex-col gap-6">
-                <div className="bg-bg-card border border-border-subtle rounded-2xl p-6">
-                  <h3 className="font-bold text-text-primary mb-4 flex items-center gap-2">
-                    <svg className="w-5 h-5 text-accent-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
-                    Trending Topics
-                  </h3>
-                  <div className="flex flex-col gap-3">
-                    {['#AppleIntelligence', '#OpenAIAgents', '#RustLang', '#YCombinator', '#NvidiaEarnings'].map((topic, i) => (
-                      <div key={topic} className="flex items-center justify-between group cursor-pointer">
-                        <span className="text-sm font-medium text-text-secondary group-hover:text-accent-blue transition-colors">{topic}</span>
-                        <span className="text-xs text-text-muted">{10 - i}k posts</span>
-                      </div>
-                    ))}
-                  </div>
                 </div>
-
-                <div className="bg-bg-card border border-border-subtle rounded-2xl p-6">
-                  <h3 className="font-bold text-text-primary mb-4">Popular Stories</h3>
-                  <div className="flex flex-col gap-4">
-                    {[
-                      { s: 'WIRED', t: 'The end of traditional coding as we know it' },
-                      { s: 'TechCrunch', t: 'Stripe acquires stablecoin platform Bridge for $1.1B' },
-                      { s: 'The Verge', t: 'Google is splitting its Search and Ads teams' }
-                    ].map((story, i) => (
-                      <div key={i} className="flex flex-col gap-1 cursor-pointer group">
-                        <span className="text-xs text-text-muted">{story.s}</span>
-                        <span className="text-sm font-medium text-text-secondary group-hover:text-text-primary transition-colors line-clamp-2">{story.t}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
+              )})}
             </div>
           </div>
         </div>

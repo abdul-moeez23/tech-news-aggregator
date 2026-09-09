@@ -30,7 +30,9 @@ class SourceViewSet(viewsets.ModelViewSet):
         return Source.objects.filter(models.Q(user__isnull=True) | models.Q(user=self.request.user))
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        source = serializer.save(user=self.request.user)
+        profile, _ = UserProfile.objects.get_or_create(user=self.request.user)
+        profile.sources.add(source)
 
     def perform_update(self, serializer):
         if serializer.instance.user != self.request.user:

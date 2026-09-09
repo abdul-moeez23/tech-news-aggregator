@@ -111,3 +111,11 @@ This document outlines the step-by-step technical execution plan for the Tech Ne
 ### Step 6.2: Persist User Selections
 - [x] **React:** Update `OnboardingTopics.jsx` to make an API call (`PATCH /api/preferences/`) to save the user's selected topics before navigating to the next page.
 - [x] **React:** Update `OnboardingSources.jsx` to make an API call (`PATCH /api/preferences/`) to save the user's selected sources before navigating to the dashboard.
+## Phase 7: Bug Fixes & Enhancements
+*Goal: Fix categorization logic and feed filtering.*
+
+### Step 7.1: Improve Article Categorization
+- [x] **Django:** Update ackend/feed/utils/filtering.py to use comprehensive keyword mapping for better categorization of articles.
+
+### Step 7.2: Strict Feed Filtering
+- [x] **Django:** Update ackend/feed/views.py to remove the isnull check, ensuring the feed only returns articles that match the user's selected Topics of Interest.

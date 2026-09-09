@@ -97,10 +97,10 @@ SIMPLE_JWT = {
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('POSTGRES_DB', 'tech_news_db'),
-        'USER': os.environ.get('POSTGRES_USER', 'tech_user'),
-        'PASSWORD': os.environ.get('POSTGRES_PASSWORD', 'tech_password'),
-        'HOST': os.environ.get('DB_HOST', 'localhost'),
+        'NAME': os.environ['POSTGRES_DB'],
+        'USER': os.environ['POSTGRES_USER'],
+        'PASSWORD': os.environ['POSTGRES_PASSWORD'],
+        'HOST': os.environ['DB_HOST'],
         'PORT': os.environ.get('POSTGRES_PORT', '5432'),
     }
 }

@@ -1,11 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api/api';
 import Layout from '../components/Layout';
+import DeleteModal from '../components/DeleteModal';
 
 export default function SourceManager() {
   const [sources, setSources] = useState([]);
   const [newSource, setNewSource] = useState({ name: '', url: '' });
   const [loading, setLoading] = useState(true);
+  const [deleteModalState, setDeleteModalState] = useState({ isOpen: false, sourceId: null, sourceName: '' });
+
+  const [enabledIds, setEnabledIds] = useState([]);
 
   useEffect(() => {
     fetchSources();
@@ -13,8 +17,12 @@ export default function SourceManager() {
 
   const fetchSources = async () => {
     try {
-      const res = await api.get('/sources/');
-      setSources(res.data);
+      const [srcRes, prefRes] = await Promise.all([
+        api.get('/sources/'),
+        api.get('/preferences/')
+      ]);
+      setSources(srcRes.data);
+      setEnabledIds(prefRes.data.sources || []);
     } catch (error) {
       console.error("Failed to fetch sources", error);
     } finally {
@@ -33,6 +41,7 @@ export default function SourceManager() {
         is_active: true
       });
       setSources([...sources, res.data]);
+      setEnabledIds([...enabledIds, res.data.id]);
       setNewSource({ name: '', url: '' });
     } catch (error) {
       console.error("Failed to add source", error);
@@ -50,14 +59,22 @@ export default function SourceManager() {
     }
   };
 
-  const deleteSource = async (id) => {
+  const handleDeleteClick = (id, name) => {
+    setDeleteModalState({ isOpen: true, sourceId: id, sourceName: name });
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteModalState.sourceId) return;
     try {
-      await api.delete(`/sources/${id}/`);
-      setSources(sources.filter(src => src.id !== id));
+      await api.delete(`/sources/${deleteModalState.sourceId}/`);
+      setSources(sources.filter(src => src.id !== deleteModalState.sourceId));
+      setDeleteModalState({ isOpen: false, sourceId: null, sourceName: '' });
     } catch (error) {
       console.error("Failed to delete source", error);
     }
   };
+
+  const displaySources = sources.filter(src => src.user !== null || enabledIds.includes(src.id));
 
   return (
     <Layout>
@@ -107,28 +124,34 @@ export default function SourceManager() {
                 </tr>
               </thead>
               <tbody>
-                {sources.length === 0 ? (
+                {displaySources.length === 0 ? (
                   <tr><td colSpan="4" className="text-center p-6 text-sm text-text-muted">No sources configured.</td></tr>
                 ) : (
-                  sources.map(src => (
+                  displaySources.map(src => (
                     <tr key={src.id} className="border-b border-border-subtle hover:bg-bg-card-elevated transition-colors">
                       <td className="p-3 text-sm font-medium text-text-primary">{src.name}</td>
                       <td className="p-3 text-xs text-text-secondary truncate max-w-[200px]">{src.url}</td>
                       <td className="p-3 text-center">
-                        <button 
-                          onClick={() => toggleSourceActive(src.id, src.is_active)}
-                          className={`px-2.5 py-1 rounded-full text-[11px] font-semibold transition-colors ${src.is_active ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}
-                        >
-                          {src.is_active ? 'Active' : 'Disabled'}
-                        </button>
+                        {src.user !== null ? (
+                          <button 
+                            onClick={() => toggleSourceActive(src.id, src.is_active)}
+                            className={`px-2.5 py-1 rounded-full text-[11px] font-semibold transition-colors ${src.is_active ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}
+                          >
+                            {src.is_active ? 'Active' : 'Disabled'}
+                          </button>
+                        ) : (
+                          <span className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-green-500/10 text-green-500 cursor-default">Active (Global)</span>
+                        )}
                       </td>
                       <td className="p-3 text-center">
-                        <button 
-                          onClick={() => deleteSource(src.id)}
-                          className="text-text-muted hover:text-red-500 font-medium transition-colors text-xs"
-                        >
-                          Delete
-                        </button>
+                        {src.user !== null && (
+                          <button 
+                            onClick={() => handleDeleteClick(src.id, src.name)}
+                            className="text-text-muted hover:text-red-500 font-medium transition-colors text-xs"
+                          >
+                            Delete
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))
@@ -138,6 +161,12 @@ export default function SourceManager() {
           </div>
         </div>
       </div>
+      <DeleteModal 
+        isOpen={deleteModalState.isOpen}
+        onClose={() => setDeleteModalState({ isOpen: false, sourceId: null, sourceName: '' })}
+        onConfirm={confirmDelete}
+        sourceName={deleteModalState.sourceName}
+      />
     </Layout>
   );
 }

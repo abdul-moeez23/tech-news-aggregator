@@ -199,14 +199,22 @@ export default function Settings() {
                 <div className="mb-6">
                   <h3 className="text-base font-semibold text-text-primary mb-3">Enabled Sources</h3>
                   <div className="flex flex-wrap gap-2">
-                    {availableSources.length === 0 && <p className="text-text-muted text-sm">No sources available in the database.</p>}
+                    {availableSources.length === 0 && <p className="text-text-muted text-sm">No sources available.</p>}
                     {availableSources.map(source => (
                       <button
                         key={source.id}
                         onClick={() => handleSourceToggle(source.id)}
-                        className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${selectedSources.includes(source.id) ? 'bg-accent-purple text-[#FAFAFA] border-accent-purple' : 'bg-bg-primary text-text-secondary border-border-subtle hover:text-text-primary hover:border-text-muted'}`}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                          selectedSources.includes(source.id) 
+                            ? 'bg-accent-purple text-[#FAFAFA] border-accent-purple' 
+                            : 'bg-bg-primary text-text-secondary border-border-subtle hover:text-text-primary hover:border-text-muted'
+                        } ${!source.is_active ? 'opacity-70 border-dashed' : ''}`}
+                        title={!source.is_active ? 'This source is disabled in Source Manager' : ''}
                       >
                         {source.name}
+                        {!source.is_active && (
+                          <span className="text-[9px] uppercase tracking-wider opacity-80">(Disabled)</span>
+                        )}
                       </button>
                     ))}
                   </div>

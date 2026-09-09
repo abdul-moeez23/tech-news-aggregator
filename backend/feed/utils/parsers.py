@@ -17,10 +17,21 @@ def parse_rss_feed(url):
             except Exception:
                 published_dt = None
                 
+        from django.utils.html import strip_tags
+        import html
+        
+        raw_summary = entry.get('summary', '')
+        # Unescape up to 3 times to handle double-escaped tags
+        for _ in range(3):
+            prev = raw_summary
+            raw_summary = html.unescape(raw_summary)
+            if raw_summary == prev:
+                break
+                
         articles.append({
             'title': entry.get('title', ''),
             'url': entry.get('link', ''),
-            'summary': entry.get('summary', ''),
+            'summary': strip_tags(raw_summary),
             'published_at': published_dt
         })
     return articles
@@ -50,10 +61,20 @@ def parse_json_api(url, categories=None):
                 except Exception:
                     pub_date_dt = None
                     
+            from django.utils.html import strip_tags
+            import html
+            
+            raw_summary = item.get('description', '')
+            for _ in range(3):
+                prev = raw_summary
+                raw_summary = html.unescape(raw_summary)
+                if raw_summary == prev:
+                    break
+                    
             articles.append({
                 'title': item.get('title', ''),
                 'url': item.get('url', ''),
-                'summary': item.get('description', ''),
+                'summary': strip_tags(raw_summary),
                 'published_at': pub_date_dt
             })
         return articles
