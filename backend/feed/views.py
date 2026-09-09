@@ -16,7 +16,7 @@ class FeedListView(generics.ListAPIView):
         try:
             profile = user.profile
         except UserProfile.DoesNotExist:
-            return ArticleMetadata.objects.prefetch_related('sources').all()[:50]
+            return ArticleMetadata.objects.prefetch_related('sources').all()
 
         freshness_limit = timezone.now() - timedelta(days=profile.freshness_days)
         queryset = ArticleMetadata.objects.filter(publication_date__gte=freshness_limit)

@@ -119,3 +119,20 @@ This document outlines the step-by-step technical execution plan for the Tech Ne
 
 ### Step 7.2: Strict Feed Filtering
 - [x] **Django:** Update ackend/feed/views.py to remove the isnull check, ensuring the feed only returns articles that match the user's selected Topics of Interest.
+
+## Phase 8: Performance Optimization for Large Datasets
+*Goal: Prevent UI freezing and long load times when fetching large amounts of feed data by implementing pagination and skeleton loaders.*
+
+### Step 8.1: Backend Pagination
+- [x] **Django:** Configure Django REST Framework to use PageNumberPagination globally or specifically for the /api/feed/ endpoint (e.g., PAGE_SIZE = 20).
+- [x] **Django:** Ensure the API response correctly returns paginated data, including 
+ext and previous page URLs.
+
+### Step 8.2: Frontend Infinite Scrolling & State Management
+- [x] **React:** Update Redux eedSlice.js to handle paginated API responses. It should append new articles to the existing state array rather than completely overwriting it.
+- [x] **React:** Implement an Intersection Observer or scroll event listener in Dashboard.jsx to trigger fetching the next page of results when the user scrolls near the bottom of the feed.
+
+### Step 8.3: UI Skeleton Loaders
+- [x] **React:** Create a new SkeletonCard UI component that visually mimics the shape of the news cards.
+- [x] **React:** Replace the simple text-based loader (Loading your feed...) with a grid of these skeleton loaders to drastically improve the perceived loading speed and user experience.
+
