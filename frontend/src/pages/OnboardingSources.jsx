@@ -29,7 +29,7 @@ function OnboardingSources() {
     try {
       // Fetch available sources from the backend
       const res = await api.get('/sources/');
-      const dbSources = res.data;
+      const dbSources = res.data.results || res.data;
       
       // Map selected static source IDs back to their names, then to DB IDs
       const selectedNames = selectedSources.map(id => SOURCES.find(s => s.id === id).name);
