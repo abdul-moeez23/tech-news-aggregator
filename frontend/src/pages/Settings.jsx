@@ -24,6 +24,7 @@ export default function Settings() {
   const [availableSources, setAvailableSources] = useState([]);
   
   const [selectedCategories, setSelectedCategories] = useState([]);
+  const [mutedTopics, setMutedTopics] = useState([]);
   const [freshness, setFreshness] = useState('3');
   const [selectedSources, setSelectedSources] = useState([]);
   
@@ -45,10 +46,11 @@ export default function Settings() {
         const cats = catRes.data.results || catRes.data;
         const srcs = srcRes.data.results || srcRes.data;
         
-        setAvailableCategories(cats.map(c => c.name));
+        setAvailableCategories(cats);
         setAvailableSources(srcs);
         
         setSelectedCategories(prefRes.data.categories || []);
+        setMutedTopics(prefRes.data.muted_topics || []);
         setSelectedSources(prefRes.data.sources || []);
         setFreshness(prefRes.data.freshness_days?.toString() || '3');
         setAutoFetch(prefRes.data.auto_fetch !== undefined ? prefRes.data.auto_fetch : true);
@@ -70,6 +72,22 @@ export default function Settings() {
         ? prev.filter(c => c !== category)
         : [...prev, category]
     );
+    // If selecting, remove from muted
+    if (!selectedCategories.includes(category)) {
+      setMutedTopics(prev => prev.filter(c => c !== category));
+    }
+  };
+
+  const handleMutedTopicToggle = (category) => {
+    setMutedTopics(prev => 
+      prev.includes(category) 
+        ? prev.filter(c => c !== category)
+        : [...prev, category]
+    );
+    // If muting, remove from selected
+    if (!mutedTopics.includes(category)) {
+      setSelectedCategories(prev => prev.filter(c => c !== category));
+    }
   };
 
   const handleSourceToggle = (source) => {
@@ -84,6 +102,7 @@ export default function Settings() {
     try {
       await api.put('/preferences/', { 
         categories: selectedCategories, 
+        muted_topics: mutedTopics,
         sources: selectedSources, 
         freshness_days: parseInt(freshness),
         auto_fetch: autoFetch,
@@ -94,6 +113,7 @@ export default function Settings() {
     } catch (error) {
       console.error(error);
       setMessage('Error saving preferences.');
+      setTimeout(() => setMessage(''), 3000);
     }
   };
 
@@ -110,22 +130,88 @@ export default function Settings() {
         ) : (
           <div className="bg-bg-card border border-border-subtle p-4 rounded-xl shadow-sm">
             
+            {/* Toast Notification */}
             {message && (
-              <div className={`p-2.5 mb-4 rounded-md text-sm font-medium ${message.includes('Error') || message.includes('Failed') ? 'bg-red-500/10 text-red-500 border border-red-500/20' : 'bg-green-500/10 text-green-500 border border-green-500/20'}`}>{message}</div>
+              <div className="fixed top-20 right-4 z-50 flex items-center gap-3 px-4 py-3 bg-white border border-border-subtle rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.08)] min-w-[280px] animate-toast-in">
+                {message.includes('Error') || message.includes('Failed') ? (
+                  <div className="w-8 h-8 rounded-full bg-red-50 flex items-center justify-center shrink-0">
+                    <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12" /></svg>
+                  </div>
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-green-50 flex items-center justify-center shrink-0">
+                    <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" /></svg>
+                  </div>
+                )}
+                <div className="flex-1 text-sm font-semibold text-text-primary">
+                  {message}
+                </div>
+                <button onClick={() => setMessage('')} className="ml-2 text-text-muted hover:text-text-primary transition-colors focus:outline-none">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              </div>
             )}
 
             <div className="mb-5">
               <h3 className="text-sm font-semibold text-text-primary mb-2">Topics of Interest</h3>
-              <div className="flex flex-wrap gap-1.5">
+              <div className="space-y-4">
                 {availableCategories.length === 0 && <p className="text-text-muted text-xs">No categories available.</p>}
                 {availableCategories.map(category => (
-                  <button
-                    key={category}
-                    onClick={() => handleCategoryToggle(category)}
-                    className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-colors ${selectedCategories.includes(category) ? 'bg-accent-blue text-[#FAFAFA] border-accent-blue' : 'bg-bg-primary text-text-secondary border-border-subtle hover:text-text-primary hover:border-text-muted'}`}
-                  >
-                    {category}
-                  </button>
+                  <div key={category.id} className="border border-border-subtle rounded-lg p-3 bg-bg-primary/50">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-2 gap-2 sm:gap-0">
+                      <span className="text-sm font-medium text-text-primary">{category.name}</span>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleCategoryToggle(category.name)}
+                          className={`text-xs px-2 py-0.5 rounded border transition-colors ${
+                            selectedCategories.includes(category.name)
+                              ? 'bg-accent-blue/20 text-accent-blue border-accent-blue/30'
+                              : 'bg-transparent text-text-secondary border-border-subtle hover:text-text-primary'
+                          }`}
+                        >
+                          {selectedCategories.includes(category.name) ? 'Selected' : 'Select'}
+                        </button>
+                        <button
+                          onClick={() => handleMutedTopicToggle(category.name)}
+                          className={`text-xs px-2 py-0.5 rounded border transition-colors ${
+                            mutedTopics.includes(category.name)
+                              ? 'bg-red-500/20 text-red-500 border-red-500/30'
+                              : 'bg-transparent text-text-secondary border-border-subtle hover:text-text-primary'
+                          }`}
+                        >
+                          {mutedTopics.includes(category.name) ? 'Muted' : 'Mute'}
+                        </button>
+                      </div>
+                    </div>
+                    {category.subcategories && category.subcategories.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 mt-2">
+                        {category.subcategories.map(sub => (
+                          <div key={sub.id} className="flex rounded border border-border-subtle overflow-hidden">
+                            <button
+                              onClick={() => handleCategoryToggle(sub.name)}
+                              className={`px-2 py-1 text-[11px] font-medium transition-colors ${
+                                selectedCategories.includes(sub.name) 
+                                  ? 'bg-accent-purple/20 text-accent-purple' 
+                                  : 'bg-bg-primary text-text-secondary hover:text-text-primary'
+                              }`}
+                            >
+                              {sub.name}
+                            </button>
+                            <button
+                              onClick={() => handleMutedTopicToggle(sub.name)}
+                              className={`px-2 py-1 text-[11px] font-medium border-l border-border-subtle transition-colors ${
+                                mutedTopics.includes(sub.name) 
+                                  ? 'bg-red-500/20 text-red-500' 
+                                  : 'bg-bg-primary text-text-secondary hover:text-red-400'
+                              }`}
+                              title={`Mute ${sub.name}`}
+                            >
+                              {mutedTopics.includes(sub.name) ? 'Muted' : '✕'}
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 ))}
               </div>
             </div>
@@ -154,7 +240,7 @@ export default function Settings() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-5 mb-6 w-full">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6 w-full">
               <div className="flex flex-col">
                 <h3 className="text-sm font-semibold text-text-primary mb-2">Freshness</h3>
                 <label className="block text-text-secondary text-xs mb-1.5">Only show articles published in the:</label>

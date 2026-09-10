@@ -21,19 +21,43 @@ class FeedListView(generics.ListAPIView):
         freshness_limit = timezone.now() - timedelta(days=profile.freshness_days)
         queryset = ArticleMetadata.objects.filter(publication_date__gte=freshness_limit)
 
-        # Because an article can have multiple sources now, we check if it overlaps 
-        # with ANY of the user's enabled sources.
         user_sources = profile.sources.all()
         if user_sources.exists():
             queryset = queryset.filter(sources__in=user_sources).distinct()
 
         user_categories = profile.categories.all()
-        if user_categories.exists():
-            queryset = queryset.filter(category__in=user_categories)
+        muted_topics = profile.muted_topics.all()
+        
+        if user_categories.exists() or muted_topics.exists():
+            from django.db.models import Case, When, Value, IntegerField, Q
+            from preferences.models import Category
             
-        # Optimization for ManyToMany fields
+            # Expanded preference profile logic
+            selected_main_ids = [c.id for c in user_categories if c.parent_id is None]
+            selected_sub_ids = [c.id for c in user_categories if c.parent_id is not None]
+            implicit_sub_ids = list(Category.objects.filter(parent_id__in=selected_main_ids).exclude(id__in=selected_sub_ids).values_list('id', flat=True))
+            muted_ids = list(muted_topics.values_list('id', flat=True))
+            
+            # Step 9.3 & 9.4 Relevance Scoring
+            queryset = queryset.annotate(
+                relevance_score=Case(
+                    When(category_id__in=muted_ids, then=Value(-100)), # Strong penalty for muted topics
+                    When(category_id__in=selected_sub_ids, then=Value(3)),
+                    When(category_id__in=selected_main_ids, then=Value(2)),
+                    When(category_id__in=implicit_sub_ids, then=Value(1)),
+                    default=Value(0),
+                    output_field=IntegerField()
+                )
+            )
+            # Filter out severely penalized articles
+            queryset = queryset.filter(relevance_score__gte=0)
+            
+            # Sort by score then date
+            queryset = queryset.order_by('-relevance_score', '-publication_date')
+        else:
+            queryset = queryset.order_by('-publication_date')
+            
         queryset = queryset.prefetch_related('sources').select_related('category')
-            
         return queryset
 
 from rest_framework.views import APIView

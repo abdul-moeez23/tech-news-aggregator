@@ -45,7 +45,7 @@ function OnboardingSources() {
   };
 
   return (
-    <div className="min-h-screen bg-bg-primary text-text-primary flex flex-col items-center justify-center p-6 relative font-sans">
+    <div className="min-h-dvh bg-bg-primary text-text-primary flex flex-col items-center justify-center p-6 relative font-sans">
       <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-accent-purple/5 rounded-full blur-[150px] -z-10"></div>
       
       <div className="max-w-4xl w-full py-12">

@@ -1,10 +1,16 @@
 from rest_framework import serializers
 from .models import UserProfile, Category, Source
 
-class CategorySerializer(serializers.ModelSerializer):
+class SubCategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
-        fields = '__all__'
+        fields = ['id', 'name']
+
+class CategorySerializer(serializers.ModelSerializer):
+    subcategories = SubCategorySerializer(many=True, read_only=True)
+    class Meta:
+        model = Category
+        fields = ['id', 'name', 'parent', 'subcategories']
 
 class SourceSerializer(serializers.ModelSerializer):
     class Meta:
@@ -17,6 +23,12 @@ class UserProfileSerializer(serializers.ModelSerializer):
         slug_field='name', 
         queryset=Category.objects.all()
     )
+    muted_topics = serializers.SlugRelatedField(
+        many=True, 
+        slug_field='name', 
+        queryset=Category.objects.all(),
+        required=False
+    )
     sources = serializers.PrimaryKeyRelatedField(
         many=True, 
         queryset=Source.objects.all()
@@ -24,4 +36,4 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UserProfile
-        fields = ['freshness_days', 'categories', 'sources', 'auto_fetch', 'fetch_frequency']
+        fields = ['freshness_days', 'categories', 'muted_topics', 'sources', 'auto_fetch', 'fetch_frequency']

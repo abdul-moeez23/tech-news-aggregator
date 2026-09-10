@@ -84,7 +84,7 @@ export default function SourceManager() {
         
         <form onSubmit={handleAddSource} className="mb-4 p-4 bg-bg-card border border-border-subtle rounded-xl shadow-sm">
           <h3 className="text-sm font-semibold text-text-primary mb-3">Add Custom Feed/API</h3>
-          <div className="flex flex-col sm:flex-row gap-2.5 items-end">
+          <div className="flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-end">
             <div className="flex-1 w-full">
               <label className="block text-xs font-medium text-text-secondary mb-1">Source Name</label>
               <input 

@@ -13,7 +13,7 @@ class UserProfileDetailView(generics.RetrieveUpdateAPIView):
         return profile
 
 class CategoryListView(generics.ListAPIView):
-    queryset = Category.objects.all()
+    queryset = Category.objects.filter(parent__isnull=True)
     serializer_class = CategorySerializer
     permission_classes = [IsAuthenticated]
 

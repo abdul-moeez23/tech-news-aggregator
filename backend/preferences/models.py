@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 
 class Category(models.Model):
     name = models.CharField(max_length=100, unique=True)
+    parent = models.ForeignKey('self', null=True, blank=True, on_delete=models.CASCADE, related_name='subcategories')
     
     def __str__(self):
         return self.name
@@ -29,6 +30,7 @@ class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     freshness_days = models.IntegerField(default=3, help_text="Number of days to look back for articles")
     categories = models.ManyToManyField(Category, blank=True)
+    muted_topics = models.ManyToManyField(Category, blank=True, related_name='muted_by_profiles')
     sources = models.ManyToManyField(Source, blank=True)
     
     # Phase 5 Additions

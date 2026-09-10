@@ -6,9 +6,9 @@ function ArticleDetail() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-bg-primary text-text-primary flex font-sans">
+    <div className="min-h-dvh bg-bg-primary text-text-primary flex font-sans">
       {/* Sidebar - Same as Dashboard (simplified for brevity) */}
-      <aside className="w-64 border-r border-border-subtle bg-bg-primary hidden md:flex flex-col sticky top-0 h-screen">
+      <aside className="w-64 border-r border-border-subtle bg-bg-primary hidden md:flex flex-col sticky top-0 h-dvh">
         <div className="p-6">
           <Link to="/dashboard" className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent-blue to-accent-purple flex items-center justify-center">
@@ -30,7 +30,7 @@ function ArticleDetail() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col min-h-screen">
+      <main className="flex-1 flex flex-col min-h-dvh">
         <header className="h-16 border-b border-border-subtle bg-bg-primary/80 backdrop-blur-md sticky top-0 z-40 px-6 flex items-center justify-between">
           <div className="flex items-center gap-4">
              <button onClick={() => navigate(-1)} className="md:hidden text-text-secondary">

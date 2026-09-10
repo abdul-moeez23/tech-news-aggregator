@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import api from '../api/api';
@@ -7,6 +7,7 @@ import { loginSuccess } from '../store/authSlice';
 function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [errorMsg, setErrorMsg] = useState('');
@@ -23,19 +24,26 @@ function Login() {
   };
 
   return (
-    <div className="h-screen overflow-hidden flex flex-col md:flex-row font-sans bg-bg-primary">
+    <div className="h-dvh overflow-hidden flex flex-col md:flex-row font-sans bg-bg-primary">
       {/* Left Panel - Dark Petrol Background */}
       <div className="hidden md:flex md:w-[55%] bg-accent-blue flex-col justify-between p-8 lg:p-12 relative overflow-y-auto h-full">
         {/* Subtle background glow/overlay if needed */}
         <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-br from-white/5 to-transparent pointer-events-none"></div>
         
-        {/* Top: Logo */}
-        <div className="relative z-10">
+        {/* Top: Header */}
+        <div className="relative z-10 flex justify-between items-center w-full">
+          {/* Logo */}
           <Link to="/" className="flex items-center gap-2 inline-flex">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent-blue to-accent-purple flex items-center justify-center shadow-lg">
               <span className="text-[#FAFAFA] font-bold text-lg leading-none">T</span>
             </div>
             <span className="text-xl font-bold tracking-tight text-white">TechPulse</span>
+          </Link>
+          
+          {/* Back to Home */}
+          <Link to="/" className="inline-flex items-center gap-1.5 px-3 py-1.5 lg:px-4 lg:py-2 bg-white text-text-primary font-semibold rounded-full hover:bg-gray-100 transition-colors text-xs lg:text-sm">
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+            Back to Home
           </Link>
         </div>
 
@@ -86,27 +94,27 @@ function Login() {
           </div>
         </div>
 
-        {/* Bottom: Back to Home */}
-        <div className="relative z-10">
-          <Link to="/" className="inline-flex items-center gap-2 px-6 py-2.5 bg-white text-text-primary font-semibold rounded-full hover:bg-gray-100 transition-colors">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-            Back to Home
-          </Link>
-        </div>
+        {/* Bottom Spacer */}
+        <div className="relative z-10"></div>
       </div>
 
       {/* Right Panel - Login Form */}
       <div className="flex-1 flex items-center justify-center p-6 bg-bg-secondary h-full overflow-y-auto">
         <div className="w-full max-w-[360px] flex flex-col justify-center">
           
-          <div className="flex justify-center mb-10 md:hidden">
+          <div className="flex justify-between items-center mb-10 md:hidden w-full absolute top-0 left-0 p-6">
+            <Link to="/" className="p-2 -ml-2 rounded-full hover:bg-bg-card-elevated text-text-secondary">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+            </Link>
             <Link to="/" className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent-blue to-accent-purple flex items-center justify-center">
                 <span className="text-[#FAFAFA] font-bold text-lg leading-none">T</span>
               </div>
               <span className="text-xl font-bold tracking-tight text-text-primary">TechPulse</span>
             </Link>
+            <div className="w-9"></div> {/* Spacer to center logo */}
           </div>
+          <div className="mt-12 md:mt-0"></div> {/* Spacer for absolute header on mobile */}
 
           <h2 className="text-3xl font-bold text-center text-text-primary mb-2">Welcome back</h2>
           <p className="text-center text-text-secondary text-sm mb-10">Please enter your details to sign in.</p>
@@ -129,14 +137,28 @@ function Login() {
                   <label className="block text-xs font-semibold text-text-secondary">Password</label>
                   <a href="#" className="text-xs font-medium text-accent-blue hover:underline">Forgot password?</a>
                 </div>
-                <input 
-                  type="password" 
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full bg-white border-none rounded-lg px-4 py-3 text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-accent-blue/20 transition-all placeholder:text-text-muted tracking-widest shadow-sm"
-                  placeholder="••••••••"
-                />
+                <div className="relative">
+                  <input 
+                    type={showPassword ? "text" : "password"}
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full bg-white border-none rounded-lg pl-4 pr-10 py-3 text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-accent-blue/20 transition-all placeholder:text-text-muted tracking-widest shadow-sm"
+                    placeholder="••••••••"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-text-muted hover:text-text-primary transition-colors focus:outline-none"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword ? (
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg>
+                    ) : (
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                    )}
+                  </button>
+                </div>
               </div>
               <button type="submit" className="w-full bg-gradient-to-r from-accent-blue to-accent-purple text-[#FAFAFA] font-bold py-3.5 rounded-lg mt-4 hover:opacity-90 transition-opacity shadow-md">
                 Sign In

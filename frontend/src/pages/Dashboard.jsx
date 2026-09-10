@@ -117,7 +117,7 @@ function Dashboard() {
               Your Intelligence Hub. <span className="text-text-muted font-normal">(All the news you care about. In one place.)</span>
             </h2>
           </div>
-          <div className="flex flex-col items-end">
+          <div className="flex flex-col items-start md:items-end w-full md:w-auto">
             {syncMessage && <span className={`text-sm mb-2 ${syncMessage.includes('Failed') ? 'text-red-500' : 'text-accent-blue'}`}>{syncMessage}</span>}
             <button 
               onClick={handleSyncNow}

@@ -136,3 +136,45 @@ ext and previous page URLs.
 - [x] **React:** Create a new SkeletonCard UI component that visually mimics the shape of the news cards.
 - [x] **React:** Replace the simple text-based loader (Loading your feed...) with a grid of these skeleton loaders to drastically improve the perceived loading speed and user experience.
 
+## Phase 9: Advanced Personalization & Relevance Scoring
+*Goal: Expand user interest taxonomy, implement user-specific feed personalization, and transition from strict category matching to dynamic relevance scoring.*
+
+### Step 9.1: Expand Interest Taxonomy (Main & Sub-Interests)
+- [x] **Django:** Update the `Category` architecture to support a hierarchical structure (Main Interests and Sub-Interests).
+- [x] **Django:** Update the seed data to establish the master list of main interests (e.g., AI, Cloud Computing, Software Engineering) and their sub-interests (e.g., Generative AI, AWS, Frontend).
+- [x] **React:** Refactor the Settings and Onboarding UI so users can select multiple main interests and their specific sub-interests.
+
+### Step 9.2: User-Specific Feed Personalization
+- [x] **Django:** Ensure the feed generation completely relies on the currently logged-in user's profile preferences rather than any global or hardcoded lists.
+- [x] **Django:** Update the feed API to prepare the user's expanded preference profile for scoring.
+
+### Step 9.3: Relevance Scoring Logic (Replacing Strict Filtering)
+- [x] **Django:** Transition the feed logic from strict `AND`/intersection matching to a relevance scoring system.
+- [x] **Django:** Implement an algorithm to score articles based on user interests. (e.g., An article matching both a main interest and a sub-interest gets ranked higher, rather than filtering out an article that only matches some).
+- [x] **Django:** Sort the returned feed primarily by this calculated relevance score (balanced with publication date/freshness).
+
+### Step 9.4: Muted Topics Feature
+- [x] **Django:** Add a `muted_topics` field to the `UserProfile` or Preferences model.
+- [x] **Django:** Update the scoring algorithm so that articles containing muted topics receive a strong negative penalty or are completely excluded.
+- [x] **React:** Add a "Muted Topics" input section in the user Preferences/Settings UI.
+
+## Phase 10: Authentication Email Flows (Resend Integration)
+*Goal: Integrate Resend to send verification emails during user signup and handle password reset flows for both local and production environments.*
+
+### Step 10.1: Resend Configuration & Setup
+- [ ] **Backend:** Add `resend` python package to `requirements.txt`.
+- [ ] **Backend:** Configure `RESEND_API_KEY` and `FROM_EMAIL` in Django settings. Ensure support for both local development (e.g. `onboarding@resend.dev`) and production domains.
+- [ ] **Backend:** Create a reusable email utility function in a new or existing module to send emails via the Resend API.
+
+### Step 10.2: Email Verification (Signup)
+- [ ] **Backend:** Update the User/Profile model to track if the email is verified (e.g., `is_email_verified = models.BooleanField(default=False)`).
+- [ ] **Backend:** Modify `RegisterView` to generate a secure email verification token upon signup.
+- [ ] **Backend:** Trigger the Resend email utility to send a "Verify Your Email" link pointing to the React frontend (using `FRONTEND_URL` from `.env`).
+- [ ] **Backend:** Create a new API endpoint `/api/users/verify-email/` that accepts the token, validates it, and updates `is_email_verified` to `True`.
+- [ ] **React:** Build a `/verify-email` route/component that extracts the token from the URL, calls the backend verification endpoint, and displays a success or error message.
+
+### Step 10.3: Forgot & Reset Password
+- [ ] **Backend:** Create an API endpoint `/api/users/forgot-password/` that accepts an email, generates a secure password reset token, and sends a "Reset Password" link via Resend.
+- [ ] **Backend:** Create an API endpoint `/api/users/reset-password/` that accepts the reset token and a new password, and securely updates the user's password.
+- [ ] **React:** Build a `/forgot-password` page with a form to request a password reset link.
+- [ ] **React:** Build a `/reset-password` page that extracts the token from the URL, allows the user to input a new password, and submits it to the backend.
