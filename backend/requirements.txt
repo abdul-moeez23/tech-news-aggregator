@@ -8,3 +8,8 @@ requests>=2.31
 djangorestframework-simplejwt>=5.3
 gunicorn>=21.2.0
 django-cors-headers
+resend
+# Phase 11: Semantic Categorization
+sentence-transformers>=2.7.0
+torch>=2.2.0
+scikit-learn>=1.4.0

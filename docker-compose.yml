@@ -62,7 +62,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 512M
+          memory: 1536M
     volumes:
       - ./frontend:/app
       - /app/node_modules
@@ -76,11 +76,11 @@ services:
   celery_worker:
     build: ./backend
     container_name: tech_news_celery_worker
-    command: celery -A core worker -l info --max-tasks-per-child=10 --max-memory-per-child=200000
+    command: celery -A core worker -l info --concurrency=4 --max-tasks-per-child=10 --max-memory-per-child=200000
     deploy:
       resources:
         limits:
-          memory: 512M
+          memory: 1536M
     volumes:
       - ./backend:/app
     env_file:
