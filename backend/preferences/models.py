@@ -4,7 +4,10 @@ from django.contrib.auth.models import User
 class Category(models.Model):
     name = models.CharField(max_length=100, unique=True)
     parent = models.ForeignKey('self', null=True, blank=True, on_delete=models.CASCADE, related_name='subcategories')
-    
+    # Phase 11: stores the sentence-transformer embedding vector as a float list.
+    # null=True so existing rows are valid before the first worker startup populates them.
+    embedding = models.JSONField(null=True, blank=True, default=None)
+
     def __str__(self):
         return self.name
 
@@ -36,6 +39,7 @@ class UserProfile(models.Model):
     # Phase 5 Additions
     auto_fetch = models.BooleanField(default=True, help_text="Automatically fetch news in the background")
     fetch_frequency = models.IntegerField(choices=FETCH_FREQUENCIES, default=60, help_text="Fetch frequency in minutes")
+    is_email_verified = models.BooleanField(default=False)
     
     def __str__(self):
         return f"{self.user.username}'s Profile"

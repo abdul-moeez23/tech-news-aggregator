@@ -18,7 +18,7 @@ function Login() {
       const response = await api.post('/auth/login/', { username: email, password: password });
       dispatch(loginSuccess({ access: response.data.access }));
       navigate('/dashboard');
-    } catch (err) {
+    } catch {
       setErrorMsg('Invalid credentials.');
     }
   };
