@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import api from '../api/api';
 import Layout from '../components/Layout';
 import DeleteModal from '../components/DeleteModal';
@@ -6,16 +6,11 @@ import DeleteModal from '../components/DeleteModal';
 export default function SourceManager() {
   const [sources, setSources] = useState([]);
   const [newSource, setNewSource] = useState({ name: '', url: '' });
-  const [loading, setLoading] = useState(true);
   const [deleteModalState, setDeleteModalState] = useState({ isOpen: false, sourceId: null, sourceName: '' });
 
   const [enabledIds, setEnabledIds] = useState([]);
 
-  useEffect(() => {
-    fetchSources();
-  }, []);
-
-  const fetchSources = async () => {
+  const fetchSources = useCallback(async () => {
     try {
       const [srcRes, prefRes] = await Promise.all([
         api.get('/sources/'),
@@ -25,10 +20,12 @@ export default function SourceManager() {
       setEnabledIds(prefRes.data.sources || []);
     } catch (error) {
       console.error("Failed to fetch sources", error);
-    } finally {
-      setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchSources();
+  }, [fetchSources]);
 
   const handleAddSource = async (e) => {
     e.preventDefault();

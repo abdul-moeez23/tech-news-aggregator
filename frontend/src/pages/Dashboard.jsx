@@ -1,9 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { logout } from '../store/authSlice';
 import { fetchFeed } from '../store/feedSlice';
-import LogoutModal from '../components/LogoutModal';
 import Layout from '../components/Layout';
 import SkeletonCard from '../components/SkeletonCard';
 import api from '../api/api';
@@ -98,7 +95,9 @@ function Dashboard() {
   }, [dispatch]);
 
   const filteredArticles = articles.filter(article => {
-    const matchesFilter = activeFilter === 'All' || article.category_name === activeFilter;
+    const matchesFilter = activeFilter === 'All' || 
+                          article.category_name === activeFilter || 
+                          article.parent_category_name === activeFilter;
     const matchesSearch = !searchQuery || 
       article.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
       (article.summary && stripHtml(article.summary).toLowerCase().includes(searchQuery.toLowerCase()));

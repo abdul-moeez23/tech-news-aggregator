@@ -2,7 +2,7 @@ import React from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 
 function ArticleDetail() {
-  const { id } = useParams();
+  const { id: _id } = useParams();
   const navigate = useNavigate();
 
   return (
