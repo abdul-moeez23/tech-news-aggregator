@@ -4,10 +4,12 @@ from django.utils import timezone
 from datetime import timedelta
 from .models import ArticleMetadata
 from .serializers import ArticleSerializer
+from .pagination import StandardResultsSetPagination
 from preferences.models import UserProfile
 
 class FeedListView(generics.ListAPIView):
     serializer_class = ArticleSerializer
+    pagination_class = StandardResultsSetPagination
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
@@ -71,4 +73,31 @@ class SyncNowView(APIView):
     def post(self, request, *args, **kwargs):
         # Trigger Celery task for this user specifically
         fetch_latest_news.delay(user_id=request.user.id)
+        
+        # Synchronously recategorize old articles so it happens immediately
+        try:
+            from .models import ArticleMetadata
+            from .utils.filtering import categorize_articles_batch
+            uncategorized = ArticleMetadata.objects.filter(category__isnull=True)
+            if uncategorized.exists():
+                uncat_list = list(uncategorized[:100]) # Limit to 100 to avoid long request timeout
+                batch_data = [{'title': a.title, 'summary': a.summary} for a in uncat_list]
+                new_cats = categorize_articles_batch(batch_data)
+                
+                for a, cat in zip(uncat_list, new_cats):
+                    if cat:
+                        a.category = cat
+                        a.save(update_fields=['category'])
+        except Exception as e:
+            print("Error recategorizing in SyncNow:", e)
+            
+        # Debug: dump category counts
+        try:
+            from django.db.models import Count
+            from .models import ArticleMetadata
+            counts = list(ArticleMetadata.objects.values('category__name').annotate(count=Count('id')))
+            return Response({"status": "Sync triggered successfully", "counts": counts}, status=status.HTTP_202_ACCEPTED)
+        except Exception as e:
+            pass
+            
         return Response({"status": "Sync triggered successfully"}, status=status.HTTP_202_ACCEPTED)
