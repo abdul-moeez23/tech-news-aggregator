@@ -162,19 +162,42 @@ ext and previous page URLs.
 *Goal: Integrate Resend to send verification emails during user signup and handle password reset flows for both local and production environments.*
 
 ### Step 10.1: Resend Configuration & Setup
-- [ ] **Backend:** Add `resend` python package to `requirements.txt`.
-- [ ] **Backend:** Configure `RESEND_API_KEY` and `FROM_EMAIL` in Django settings. Ensure support for both local development (e.g. `onboarding@resend.dev`) and production domains.
-- [ ] **Backend:** Create a reusable email utility function in a new or existing module to send emails via the Resend API.
+- [x] **Backend:** Add `resend` python package to `requirements.txt`.
+- [x] **Backend:** Configure `RESEND_API_KEY` and `FROM_EMAIL` in Django settings. Ensure support for both local development (e.g. `onboarding@resend.dev`) and production domains.
+- [x] **Backend:** Create a reusable email utility function in a new or existing module to send emails via the Resend API.
 
 ### Step 10.2: Email Verification (Signup)
-- [ ] **Backend:** Update the User/Profile model to track if the email is verified (e.g., `is_email_verified = models.BooleanField(default=False)`).
-- [ ] **Backend:** Modify `RegisterView` to generate a secure email verification token upon signup.
-- [ ] **Backend:** Trigger the Resend email utility to send a "Verify Your Email" link pointing to the React frontend (using `FRONTEND_URL` from `.env`).
-- [ ] **Backend:** Create a new API endpoint `/api/users/verify-email/` that accepts the token, validates it, and updates `is_email_verified` to `True`.
-- [ ] **React:** Build a `/verify-email` route/component that extracts the token from the URL, calls the backend verification endpoint, and displays a success or error message.
+- [x] **Backend:** Update the User/Profile model to track if the email is verified (e.g., `is_email_verified = models.BooleanField(default=False)`).
+- [x] **Backend:** Modify `RegisterView` to generate a secure email verification token upon signup.
+- [x] **Backend:** Trigger the Resend email utility to send a "Verify Your Email" link pointing to the React frontend (using `FRONTEND_URL` from `.env`).
+- [x] **Backend:** Create a new API endpoint `/api/users/verify-email/` that accepts the token, validates it, and updates `is_email_verified` to `True`.
+- [x] **React:** Build a `/verify-email` route/component that extracts the token from the URL, calls the backend verification endpoint, and displays a success or error message.
 
 ### Step 10.3: Forgot & Reset Password
-- [ ] **Backend:** Create an API endpoint `/api/users/forgot-password/` that accepts an email, generates a secure password reset token, and sends a "Reset Password" link via Resend.
-- [ ] **Backend:** Create an API endpoint `/api/users/reset-password/` that accepts the reset token and a new password, and securely updates the user's password.
-- [ ] **React:** Build a `/forgot-password` page with a form to request a password reset link.
-- [ ] **React:** Build a `/reset-password` page that extracts the token from the URL, allows the user to input a new password, and submits it to the backend.
+- [x] **Backend:** Create an API endpoint `/api/users/forgot-password/` that accepts an email, generates a secure password reset token, and sends a "Reset Password" link via Resend.
+- [x] **Backend:** Create an API endpoint `/api/users/reset-password/` that accepts the reset token and a new password, and securely updates the user's password.
+- [x] **React:** Build a `/forgot-password` page with a form to request a password reset link.
+- [x] **React:** Build a `/reset-password` page that extracts the token from the URL, allows the user to input a new password, and submits it to the backend.
+
+## Phase 11: Semantic Categorization (Sentence Transformers)
+*Goal: Replace the fragile regex-based keyword matching with a robust semantic similarity approach using sentence-transformers. This will categorize articles based on meaning rather than exact word counts, drastically reducing miscategorizations.*
+
+### Step 11.1: Environment & Infrastructure Updates
+- [x] **Docker:** Update `docker-compose.yml` to increase the `celery_worker` memory limit from 512MB to 1.5GB to accommodate the AI model.
+- [x] **Docker/Celery:** Update the `celery_worker` startup command in `docker-compose.yml` to explicitly use `--concurrency=4` instead of defaulting to 8 workers, ensuring safe memory usage.
+
+### Step 11.2: Dependency & Model Setup
+- [x] **Backend:** Add `sentence-transformers`, `torch`, and `scikit-learn` to `requirements.txt`.
+- [x] **Backend:** Create a utility to load and cache a lightweight semantic model (e.g., `all-MiniLM-L6-v2`) locally so it doesn't download on every Celery task run.
+
+### Step 11.3: Category Embedding Management (Batch Size 256)
+- [x] **Backend:** Write a utility function in `filtering.py` to generate and cache vector embeddings for all categories in memory.
+- [x] **Backend:** Ensure the category embeddings are generated using batch processing with a **batch size of 256** to efficiently process all current (and future) categories at once during startup.
+
+### Step 11.4: Update Categorization Logic (Batch Size 32)
+- [x] **Backend:** Refactor `categorize_article(title, summary)` in `backend/feed/utils/filtering.py` to use the semantic model.
+- [x] **Backend:** When new articles are fetched, process their title/summary embeddings using a **batch size of 32**.
+- [x] **Backend:** Compute the cosine similarity against all cached category embeddings, and return the category with the highest similarity score (above a minimum confidence threshold).
+
+### Step 11.5: Testing & Verification
+- [x] **Backend:** Write a quick test script to verify that ambiguous articles (e.g., "RAG Architecture" or "Agent Workflows") correctly map to "Generative AI" / "AI" instead of "Software Engineering" using the new semantic engine.
