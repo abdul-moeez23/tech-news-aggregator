@@ -28,6 +28,9 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
+# Suppress W042: use BigAutoField as default primary key type for all models
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
 
 # Application definition
 
@@ -156,7 +159,7 @@ MAILERS = {
 
 # Resend Email Configuration
 RESEND_API_KEY = os.environ.get('RESEND_API_KEY', '')
-FROM_EMAIL = os.environ.get('FROM_EMAIL', 'onboarding@resend.dev')
+FROM_EMAIL = os.environ.get('FROM_EMAIL', 'Tech News <updates@news.amiftikhar.me>')
 FRONTEND_URL = os.environ.get('FRONTEND_URL', 'http://localhost:5173')
 
 # Celery settings

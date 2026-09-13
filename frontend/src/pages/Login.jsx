@@ -16,8 +16,21 @@ function Login() {
     e.preventDefault();
     try {
       const response = await api.post('/auth/login/', { username: email, password: password });
+      
+      // Ensure token is set before fetching preferences
+      localStorage.setItem('token', response.data.access);
       dispatch(loginSuccess({ access: response.data.access }));
-      navigate('/dashboard');
+      
+      try {
+        const prefRes = await api.get('/preferences/');
+        if (!prefRes.data.categories || prefRes.data.categories.length === 0) {
+          navigate('/onboarding/topics');
+        } else {
+          navigate('/dashboard');
+        }
+      } catch {
+        navigate('/dashboard');
+      }
     } catch {
       setErrorMsg('Invalid credentials.');
     }
