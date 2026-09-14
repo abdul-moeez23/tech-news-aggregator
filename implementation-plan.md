@@ -201,3 +201,20 @@ ext and previous page URLs.
 
 ### Step 11.5: Testing & Verification
 - [x] **Backend:** Write a quick test script to verify that ambiguous articles (e.g., "RAG Architecture" or "Agent Workflows") correctly map to "Generative AI" / "AI" instead of "Software Engineering" using the new semantic engine.
+
+ # #   P h a s e   1 2 :   C u s t o m   U s e r   I n t e r e s t s 
+ * G o a l :   A l l o w   u s e r s   t o   d y n a m i c a l l y   c r e a t e   a n d   s e l e c t   c u s t o m   i n t e r e s t s   d u r i n g   o n b o a r d i n g   o r   v i a   t h e i r   s e t t i n g s ,   w h i c h   a r e   a u t o m a t i c a l l y   e m b e d d e d   a n d   u s e d   f o r   f e e d   f e t c h i n g . * 
+ 
+ # # #   S t e p   1 2 . 1 :   F r o n t e n d   U I   f o r   C u s t o m   C a t e g o r i e s 
+ -   [   ]   * * R e a c t : * *   U p d a t e   O n b o a r d i n g T o p i c s . j s x   t o   i n c l u d e   a   t e x t   i n p u t   f i e l d   f o r   u s e r s   t o   e n t e r   c u s t o m   t o p i c s . 
+ -   [   ]   * * R e a c t : * *   A d d   l o g i c   t o   p u s h   t h e   c u s t o m   t o p i c   i n t o   t h e   l o c a l   s e l e c t e d T o p i c s   s t a t e   s o   i t   a p p e a r s   a s   a   s e l e c t a b l e   p i l l   a n d   g e t s   i n c l u d e d   i n   t h e   P A T C H   / a p i / p r e f e r e n c e s /   p a y l o a d   u p o n   f o r m   s u b m i s s i o n . 
+ 
+ # # #   S t e p   1 2 . 2 :   B a c k e n d   S e r i a l i z e r   D y n a m i c   C r e a t i o n 
+ -   [   ]   * * D j a n g o : * *   U p d a t e   U s e r P r o f i l e S e r i a l i z e r   i n    a c k e n d / p r e f e r e n c e s / s e r i a l i z e r s . p y   t o   h a n d l e   d y n a m i c   c a t e g o r y   c r e a t i o n   i n s t e a d   o f   s t r i c t l y   r e j e c t i n g   u n k n o w n   w o r d s . 
+ -   [   ]   * * D j a n g o : * *   R e p l a c e   t h e   s t r i c t   S l u g R e l a t e d F i e l d   f o r   t h e   c a t e g o r i e s   f i e l d .   O v e r r i d e   t h e   u p d a t e ( )   m e t h o d   t o   i t e r a t e   t h r o u g h   t h e   r e c e i v e d   c a t e g o r y   n a m e s ,   a n d   u s e   C a t e g o r y . o b j e c t s . g e t _ o r _ c r e a t e ( )   t o   d y n a m i c a l l y   a d d   n e w   c a t e g o r i e s   t o   t h e   d a t a b a s e . 
+ 
+ # # #   S t e p   1 2 . 3 :   A u t o m a t i c   A I   E m b e d d i n g   T r i g g e r 
+ -   [   ]   * * D j a n g o : * *   I m p o r t   i n v a l i d a t e _ c a t e g o r y _ c a c h e   f r o m    a c k e n d . f e e d . u t i l s . f i l t e r i n g   i n t o   t h e   p r e f e r e n c e s   s e r i a l i z e r . 
+ -   [   ]   * * D j a n g o : * *   C a l l   i n v a l i d a t e _ c a t e g o r y _ c a c h e ( w i p e _ d b = F a l s e )   i n s i d e   t h e   s e r i a l i z e r ' s   u p d a t e ( )   m e t h o d   w h e n e v e r   a   b r a n d   n e w   c u s t o m   c a t e g o r y   i s   c r e a t e d .   T h i s   e n s u r e s   t h e   b a c k g r o u n d   w o r k e r   w i l l   a u t o m a t i c a l l y   g e n e r a t e   t h e   r e q u i r e d   A I   e m b e d d i n g s   f o r   t h e   n e w   t o p i c   d u r i n g   i t s   n e x t   f e t c h   c y c l e . 
+  
+ 
