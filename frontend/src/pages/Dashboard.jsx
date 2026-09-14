@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchFeed } from '../store/feedSlice';
 import Layout from '../components/Layout';
@@ -50,6 +51,7 @@ function Dashboard() {
   const [searchQuery, setSearchQuery] = useState('');
   
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   
   const { articles, status, hasMore, currentPage } = useSelector((state) => state.feed);
 
@@ -86,13 +88,18 @@ function Dashboard() {
   };
 
   useEffect(() => {
-    dispatch(fetchFeed());
     api.get('/preferences/').then(res => {
+      if (!res.data.categories || res.data.categories.length === 0) {
+        navigate('/onboarding/topics');
+        return;
+      }
       if (res.data && res.data.categories) {
         setCategories(['All', ...res.data.categories]);
       }
+      // Only fetch feed if they are allowed on the dashboard
+      dispatch(fetchFeed());
     }).catch(err => console.error("Error fetching preferences", err));
-  }, [dispatch]);
+  }, [dispatch, navigate]);
 
   const filteredArticles = articles.filter(article => {
     const matchesFilter = activeFilter === 'All' || 
