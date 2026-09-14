@@ -105,15 +105,6 @@ from django.dispatch import receiver
 def create_user_profile(sender, instance, created, **kwargs):
     if created:
         profile = UserProfile.objects.create(user=instance)
-        
-        # Add default categories and sources so new users have a populated feed
-        default_categories = Category.objects.all()
-        if default_categories.exists():
-            profile.categories.set(default_categories)
-            
-        default_sources = Source.objects.filter(is_active=True, user__isnull=True)
-        if default_sources.exists():
-            profile.sources.set(default_sources)
 
 @receiver(post_save, sender=User)
 def save_user_profile(sender, instance, **kwargs):
